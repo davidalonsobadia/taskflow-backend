@@ -1,0 +1,33 @@
+__pycache__
+.venv
+.env
+.vscode
+.idea
+.vs
+.vscode
+.git
+.gitignore
+
+
+# Python
+*.py[cod]
+*.pyo
+*.pyd
+
+# Local data and media
+media/
+data/
+
+# Tests and docs
+/tests
+/docs
+
+# Docker and dev configs
+.github/
+.devcontainer/
+docker-compose*.yml
+
+# OS & misc
+.DS_Store
+*.log
+node_modules/

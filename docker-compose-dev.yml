@@ -1,0 +1,130 @@
+# Docker Compose configuration for local development
+# Usage: docker-compose -f docker-compose.yml -f docker-compose-dev.yml up
+
+services:
+  web:
+    build: .
+    env_file:
+      - .env
+    networks:
+      - taskflow-network
+    ports:
+      - "8000:8000"
+    environment:
+      - RUN_MIGRATIONS=1
+      - REDIS_URL=redis://redis:6379/0
+      - INSTALL_DEPS_ON_START=1
+      - DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/taskflow_db
+    volumes:
+      - ./scripts:/app/scripts
+      - .:/app
+      - pip_cache:/root/.cache/pip  # Cache for pip installations
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; response = urllib.request.urlopen(\"http://localhost:8000/api/v1/health\"); exit(0 if response.status == 200 else 1)'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  caddy:
+    profiles: ["disabled"]  # This will prevent caddy from starting in local development
+    networks:
+      - taskflow-network
+    image: caddy:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  worker:
+    build: .
+    command: celery -A app.celery_app.celery worker --loglevel=info
+    volumes:
+      - .:/app
+      - pip_cache:/root/.cache/pip
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/taskflow_db
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - taskflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.celery_app.celery inspect ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - taskflow-network
+
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    networks:
+      - taskflow-network
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: taskflow_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  adminer:
+    image: adminer
+    ports:
+      - 8080:8080
+    networks:
+      - taskflow-network
+    depends_on:
+      - db
+
+networks:
+  taskflow-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+  pip_cache:  # Cache for pip installations
+

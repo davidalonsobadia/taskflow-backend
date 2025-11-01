@@ -17,5 +17,4 @@ class List(Base):
 
     # Relationships
     user = relationship("User", back_populates="lists")
-    # TODO: Add tasks relationship when Task model is created
-    # tasks = relationship("Task", back_populates="list", cascade="all, delete-orphan")
+    tasks = relationship("Task", back_populates="list", cascade="all, delete-orphan")

@@ -104,10 +104,6 @@ test.db-shm
 *.db-wal
 *.db-shm
 
-# Europace payload logs
-logs/europace_payloads/
-
-
 tests/backups/*.sql
 
 test-results/*

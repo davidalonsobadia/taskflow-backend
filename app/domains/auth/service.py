@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from datetime import datetime, timedelta
 
 from . import models, schemas, utils
+from .tasks import send_verification_email_task, send_password_reset_email_task, send_welcome_email_task
 
 
 class AuthService:
@@ -39,8 +40,12 @@ class AuthService:
         self.db.commit()
         self.db.refresh(db_user)
 
-        # TODO: Send verification email with token
-        # send_verification_email(payload.email, verification_token)
+        # Send verification email asynchronously via Celery
+        send_verification_email_task.delay(
+            email=payload.email,
+            name=payload.name,
+            verification_token=verification_token
+        )
 
         return db_user
 
@@ -82,11 +87,17 @@ class AuthService:
         self.db.commit()
         self.db.refresh(user)
 
+        # Send welcome email asynchronously via Celery
+        send_welcome_email_task.delay(
+            email=user.email,
+            name=user.name
+        )
+
         return user
 
     def forgot_password(self, email: str) -> None:
         """Request password reset"""
-        user = self.db.query(models.User).filter(
+        user: Optional[models.User] = self.db.query(models.User).filter(
             models.User.email == email
         ).first()
 
@@ -100,8 +111,12 @@ class AuthService:
 
         self.db.commit()
 
-        # TODO: Send password reset email with token
-        # send_reset_email(email, reset_token)
+        # Send password reset email asynchronously via Celery
+        send_password_reset_email_task.delay(
+            email=email,
+            name=user.name,
+            reset_token=reset_token
+        )
 
     def reset_password(self, token: str, new_password: str) -> models.User:
         """Reset password with token"""

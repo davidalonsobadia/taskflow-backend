@@ -29,5 +29,4 @@ else:
 
 # Auto-discover tasks in domain modules
 # Add task modules here as you create them
-# Example: celery.autodiscover_tasks(["app.domains.auth.tasks", "app.domains.lists.tasks"])
-celery.autodiscover_tasks([])
+celery.autodiscover_tasks(["app.domains.auth.tasks"])

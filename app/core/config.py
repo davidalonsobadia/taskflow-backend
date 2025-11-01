@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     RESEND_FROM_EMAIL: str = "noreply@example.com"
     RESEND_API_KEY: str = "your-resend-key"
 
+    # Frontend URL for email links (verification, password reset, etc.)
+    FRONTEND_URL: str = "http://localhost:3000"
+
     # The actual key should be in the environment variable or .env file
     SECRET_KEY: str = "fallback-secret-c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90"
 

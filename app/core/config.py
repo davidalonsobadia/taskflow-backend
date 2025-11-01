@@ -7,6 +7,10 @@ class Settings(BaseSettings):
     # App environment (align with client-portal APP_ENV)
     APP_ENV: str = "development"
 
+    # JWT settings
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30  # Token expires in 30 minutes
+    ALGORITHM: str = "HS256"  # JWT algorithm
+
     # Email settings
     # Resend settings
     RESEND_FROM_EMAIL: str = "noreply@example.com"

@@ -3,7 +3,15 @@
 import argparse
 import hashlib
 import secrets
+import sys
 import traceback
+from pathlib import Path
+
+# Add the parent directory to Python path so we can import from app
+script_dir = Path(__file__).parent
+app_dir = script_dir.parent
+sys.path.insert(0, str(app_dir))
+
 from app.db.session import get_db
 from app.domains.api_clients.models import APIClient
 

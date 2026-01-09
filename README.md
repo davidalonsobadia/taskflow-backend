@@ -43,7 +43,36 @@ docker-compose up -d
 
 That's it! 🎉
 
-### **3. Access the Application**
+### **3. Create an API Key**
+
+Before making requests to the API, you need to create an API key:
+
+```bash
+# Create an API client with a name (e.g., "frontend" for the frontend app)
+docker-compose exec api python scripts/create_api_client.py --name "frontend"
+```
+
+The script will output your API key. **Save this key securely** - you won't be able to see it again!
+
+Example output:
+```
+✅ API key created for 'frontend'
+🔑 Here is the API key (save it securely!):
+
+your-api-key-here
+```
+
+**For Frontend Setup:**
+1. Copy the API key from the output above
+2. Create a `.env.local` file in the `frontend/` directory (or add to existing `.env`)
+3. Add the following:
+   ```bash
+   NEXT_PUBLIC_API_KEY=your-api-key-here
+   NEXT_PUBLIC_API_URL=http://localhost:8000
+   ```
+4. Restart your frontend development server
+
+### **4. Access the Application**
 
 - **API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
@@ -103,13 +132,36 @@ See `.env.example` for all available options.
 
 ---
 
+## 🔑 API Key Authentication
+
+All API requests (except health checks and documentation endpoints) require an API key to be included in the request headers.
+
+### **How It Works**
+
+1. **Create an API key** using the script (see Quick Start section)
+2. **Include the key** in all requests using the `x-api-key` header
+3. The API key is validated on every request
+
+### **Exempt Endpoints**
+
+The following endpoints don't require an API key:
+- `/api/v1/health` - Health check
+- `/docs` - Swagger documentation
+- `/openapi.json` - OpenAPI schema
+- `/redoc` - ReDoc documentation
+
+---
+
 ## 🧪 Testing the API
+
+> **Note**: Replace `YOUR_API_KEY` with the actual API key you created in the Quick Start section.
 
 ### **Register a User**
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/register \
   -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
   -d '{
     "name": "John Doe",
     "email": "john@example.com",
@@ -122,6 +174,7 @@ curl -X POST http://localhost:8000/api/v1/auth/register \
 ```bash
 curl -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
   -d '{
     "email": "john@example.com",
     "password": "SecurePassword123!"
@@ -133,12 +186,15 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
 ```bash
 curl -X POST http://localhost:8000/api/v1/lists \
   -H "Content-Type: application/json" \
+  -H "x-api-key: YOUR_API_KEY" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
     "name": "My Tasks",
     "description": "Things to do"
   }'
 ```
+
+> **Note**: Most endpoints require both an API key (`x-api-key` header) and an authentication token (`Authorization: Bearer` header) for authenticated requests.
 
 ---
 
@@ -287,8 +343,9 @@ MIT License - feel free to use this for your projects!
 1. **Get Resend API key** from https://resend.com
 2. **Update `.env`** with your API key
 3. **Start services** with `docker-compose up`
-4. **Test the API** using the examples above
-5. **Customize** for your needs!
+4. **Create an API key** using `docker-compose exec api python scripts/create_api_client.py --name "my-client"`
+5. **Test the API** using the examples above (don't forget to include your API key!)
+6. **Customize** for your needs!
 
 Happy coding! 🚀
 
